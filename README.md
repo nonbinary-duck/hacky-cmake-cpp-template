@@ -1,1 +1,3 @@
-# hacky-cmake-cpp-template
+# Configuration
+
+`$ node configure_project.js`
