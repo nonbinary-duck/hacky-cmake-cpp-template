@@ -62,7 +62,7 @@ async function main()
 	/**
 	 * @type {string}
 	 */
-	const projName = await prompt("What's the project name?");
+	const projName = await prompt("What's the project name? ");
 	const projID = Math.floor((Math.random() * 899999) + 100000);
 
 	if (projName.includes(' ') || projName.includes('<') || projName.includes('>'))
@@ -76,12 +76,15 @@ async function main()
 	{
 		var f = fs.readFileSync(file.name, 'utf-8');
 
-		f.replace(/__PROJID__/g, projID);
-		f.replace(/<PROJECT_NAME>/g, projName);
+		f = f.replace(/__PROJID__/g, projID);
+		f = f.replace(/<PROJECT_NAME>/g, projName);
 
 		fs.writeFileSync(file.name, f);
 	});
 
 	console.log(`Configured projectID: ${projID} with name ${projName}!`);
+
+	process.exit();
 }
 
+main();
