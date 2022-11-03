@@ -20,20 +20,20 @@ namespace utils
     typedef uint_least64_t    tulong;
     typedef uint_least32_t    tuint;
     typedef uint_least16_t    tushort;
-    typedef uint_least8_t     tubyte;
+    typedef uint_least8_t     tuchar;
 
-    typedef int_least64_t     slong;
-    typedef int_least32_t     sint;
-    typedef int_least16_t     sshort;
-    typedef int_least8_t      sbyte;
+    typedef int_least64_t     tslong;
+    typedef int_least32_t     tsint;
+    typedef int_least16_t     tsshort;
+    typedef int_least8_t      tschar;
 
     // Give names to forced-width floating point types
     // Let the compiler decide what type to use here, since msvc doesn't support 128-bit floating-point
     //     Line is only included for consistency
     typedef long double       tlongdouble;
 #ifdef _MSVC_LANG
-    typedef double          tdouble;
-    typedef float          tfloat;
+    typedef double            tdouble;
+    typedef float             tfloat;
 #else
     typedef _Float64          tdouble;
     typedef _Float32          tfloat;
@@ -44,7 +44,7 @@ namespace utils
     /**
      * @brief Fetches the current time in UTC. Uses the std::chrono::system_clock clock.
      * 
-     * @note This needs to be re-written after commonn implementation of std::chrono::utc_clock
+     * @note This needs to be re-written after common implementation of std::chrono::utc_clock
      * 
      * @return std::tm The current time in the UTC timezone
      */
