@@ -10,9 +10,9 @@ using std::cout, std::cin, std::endl;
  * 
  * @param argc Count of command-line arguments
  * @param argv Args, zero is the name of the program
- * @return char An error code
+ * @return int An error code
  */
-char main(size_t argc, char *argv[])
+int main(size_t argc, char *argv[])
 {
 	cout << "Hello, world!! I'm <PROJECT_NAME> :)" << endl;
 	
