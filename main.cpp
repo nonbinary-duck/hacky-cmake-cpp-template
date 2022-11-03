@@ -12,7 +12,7 @@ using std::cout, std::cin, std::endl;
  * @param argv Args, zero is the name of the program
  * @return int An error code
  */
-int main(size_t argc, char *argv[])
+int main(int argc, char *argv[])
 {
 	cout << "Hello, world!! I'm <PROJECT_NAME> :)" << endl;
 	
