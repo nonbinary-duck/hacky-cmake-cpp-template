@@ -65,9 +65,7 @@ namespace utils
     {
         // Get a pointer to the location on the stack, send it to asctime for formatting
         // Then convert the buffer into a string for easy appending
-        char *buffer = std::asctime(&time);
-
-        std::string s = std::string(buffer);
+        std::string s = std::string(std::asctime(&time));
 
         // Remove the newline character
         s.pop_back();
