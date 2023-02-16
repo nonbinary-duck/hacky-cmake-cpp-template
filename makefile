@@ -1,13 +1,18 @@
 # Default option
-release: clean
+release:
     # Make the build dir and cd into it, then execute cmake
 	mkdir -p ./build/release; cd ./build/release; cmake ../..; make
 
 # Sekected with first arg as "debug"
-debug: clean
+debug:
     # Make the build dir and cd into it, then execute cmake
 	mkdir -p ./build/debug; cd ./build/debug; cmake ../.. -DCMAKE_BUILD_TYPE=Debug; make
 
-# Fist clean up after the last build, arguably non-optimal, though it's not that important and required by my lazy CMakeLists.txt
+fresh-debug: clean debug
+
+fresh-release: clean debug
+
+
+# Optionally clean up after the last build
 clean:
 	if [ -d "./build" ]; then rm -r ./build; fi
