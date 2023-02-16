@@ -10,7 +10,7 @@ debug:
 
 fresh-debug: clean debug
 
-fresh-release: clean debug
+fresh-release: clean release
 
 
 # Optionally clean up after the last build
