@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.12)
 
-set(PROJ_NAME <PROJECT_NAME>)
+set(PROJ_NAME simple_ros2_test)
 
 # Set the compiler flags
 # Use Wall to give good feedback and use pthread so we can use threads
@@ -15,6 +15,11 @@ endif()
 # Set the project name
 project(${PROJ_NAME})
 
+# ROS packages
+find_package(ament_cmake REQUIRED)
+find_package(rclcpp REQUIRED)
+find_package(std_msgs REQUIRED)
+
 # Give directories where header files are located
 # Technically not needed as we are an executable application and main links to everything we need for us
 include_directories(
@@ -23,9 +28,20 @@ include_directories(
 
 # Add main.cpp to the executable
 add_executable(${PROJ_NAME} main.cpp)
+ament_target_dependencies(${PROJ_NAME} rclcpp std_msgs)
 
 # Inlcude source files from the src dir
 add_subdirectory(${PROJECT_SOURCE_DIR}/src)
 
 # Use c++ 23 if supported
 set_property(TARGET ${PROJ_NAME} PROPERTY CXX_STANDARD 23)
+
+
+install(TARGETS
+    ${PROJ_NAME}
+    DESTINATION lib/${PROJ_NAME}
+)
+
+
+
+ament_package()

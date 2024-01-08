@@ -3,7 +3,8 @@
         {
             "name": "Linux",
             "includePath": [
-                "${workspaceFolder}/**"
+                "${workspaceFolder}/**",
+                "/opt/ros/iron/include/**"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc-11",

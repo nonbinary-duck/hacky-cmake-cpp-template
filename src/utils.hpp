@@ -1,6 +1,6 @@
 #pragma once
-#ifndef H___PROJID___SRC_UTILS
-#define H___PROJID___SRC_UTILS 1
+#ifndef H_599955_SRC_UTILS
+#define H_599955_SRC_UTILS 1
 
 #include <string>
 #include <chrono>
@@ -81,4 +81,4 @@ namespace utils
     
 } // End namespace utils
 
-#endif // H___PROJID___SRC_UTILS
+#endif // H_599955_SRC_UTILS
