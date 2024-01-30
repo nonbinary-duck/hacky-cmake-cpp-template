@@ -2,10 +2,7 @@
 
 using std::cout, std::cin, std::endl;
 
-#include "rclcpp/rclcpp.hpp"
-
 #include "src/utils.hpp"
-#include "src/simple_controller.hpp"
 
 
 /**
@@ -17,12 +14,7 @@ using std::cout, std::cin, std::endl;
  */
 int main(int argc, char *argv[])
 {
-	//cout << "Hello, world!! I'm simple-ros2-test :)" << endl;
-
-	rclcpp::init(argc, argv);
-	rclcpp::spin( std::make_shared<simple_ros2_test::SensorSubscriber>() );
-	rclcpp::shutdown();
-
+	cout << "Hello, world!! I'm <PROJECT_NAME> :)" << endl;
 	
 	return 0;
 }
