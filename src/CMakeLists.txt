@@ -1,5 +1,2 @@
-# target_sources(${PROJ_NAME} PRIVATE
-#     example.cpp
-# )
-
-# add_subdirectory(exampleDir)
+add_subdirectory(<EXEC>)
+add_subdirectory(shared)
