@@ -4,25 +4,6 @@ const fs   = require('node:fs');
 const path = require('path');
 
 const cwd = process.cwd();
-const { stdin, stdout } = process;
-
-
-/**
- * Taken directly from https://stackoverflow.com/questions/17837147/user-input-in-node-js
- * @param {string} question
- */
-function prompt(question)
-{
-    return new Promise((resolve, reject) =>
-
-    {
-        stdout.write(question);
-        stdin.resume();
-
-        stdin.on('data', data => resolve(data.toString().trim()));
-        stdin.on('error', err => reject(err));
-    });
-}
 
 
 /**
@@ -59,8 +40,33 @@ function readDir(dirname, files, dirs)
     });
 }
 
-async function main()
+function printHelp()
 {
+    console.log(
+        `configure_project.js usage:
+            node configure_project.js <project_name> <exec_name> [optional proj_number]
+        
+        project_name:
+            The name of the project
+            Replaces the RegEx rule: /<PROJECT_NAME>/g
+        
+        exec_name:
+            What to call the default hello world executable
+            Replaces the RegEx rule: /<EXEC>/g
+        
+        proj_number:
+            The project number, used in ifndef statements
+            Typically assigned a number between 100'000 - 999'999, can optionally be specified
+            Replaces the RegEx rule: /__PROJID__/g
+        
+        `
+    );
+}
+
+function main()
+{
+    if (process.argv.length != 3) { printHelp(); return 0; }
+    
     /**
      * @type {[fs.Dirent]}
      */
@@ -76,14 +82,14 @@ async function main()
     /**
      * @type {string}
      */
-    const projName = await prompt("What's the project name? ");
-    const execName = await prompt("What's the executable name? ");
+    const projName = process.argv[1];
+    const execName = process.argv[2];
     const projID   = Math.floor((Math.random() * 899999) + 100000);
 
     if (projName.includes(' ') || projName.includes('<') || projName.includes('>'))
     {
         console.error("Forbidden project name");
-        process.exit(1);
+        return 1;
     }
 
     // Setup the patterns
@@ -136,7 +142,7 @@ async function main()
     console.log(`Configured projectID: ${projID} with name ${projName}!`);
     console.log(`The hello world executable is named "${execName}"`);
 
-    process.exit();
+    return 0;
 }
 
-main();
+process.exit(main());
