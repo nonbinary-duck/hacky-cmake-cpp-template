@@ -17,7 +17,7 @@
             "label": "fresh-build & run",
             "group": "build",
             "type": "shell",
-            "command": "cd ${workspaceFolder} && make fresh-release; cd build/release && ./<PROJECT_NAME>"
+            "command": "cd ${workspaceFolder} && make fresh-release; cd build && ./<EXEC>"
         },
         {
             "label": "build",
@@ -35,7 +35,7 @@
             "label": "build & run",
             "group": "build",
             "type": "shell",
-            "command": "cd ${workspaceFolder} && make release; cd build/release && ./<PROJECT_NAME>"
+            "command": "cd ${workspaceFolder} && make release; cd build && ./<EXEC>"
         }
     ]
 }

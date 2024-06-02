@@ -1,8 +1,10 @@
 #include <filesystem>
+#include <functional>
 #include <exception>
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <utility>
 #include <random>
 #include <regex>
 
@@ -16,6 +18,15 @@
 // Then manually remove these files
 //     rm CLI11.hpp init_project.cpp init
 //
+
+
+// The maximum number of times to attempt to rebuild a file hierarchy
+#define MAX_PATH_CHANGES 10'000ul
+
+
+typedef const std::filesystem::directory_entry action_param_type;
+typedef std::function<bool(action_param_type)> action_func_type;
+
 
 /**
  * @brief Validator if a string is a valid key for cmake
@@ -47,6 +58,52 @@ struct ValidKeyValidator : public CLI::Validator
     }
 };
 const static ValidKeyValidator ValidKey;
+
+
+/**
+ * @brief Apply an action recursively to every file and directory in a cwd
+ * 
+ * @param cwd The origin
+ * @param ignoreRules Which paths to ignore
+ * @param action The action to take
+ */
+inline void action_on_path(
+    const std::filesystem::path &cwd,
+    const std::vector<std::regex> &ignoreRules,
+    const action_func_type &action)
+{
+    size_t rebuildCount = 0;
+    
+rebuild:
+
+    if (rebuildCount++ > MAX_PATH_CHANGES)
+    {
+        throw std::runtime_error("To many path changes, invalid replace patterns can cause recursion");
+    }
+    
+    for (auto &&path : std::filesystem::recursive_directory_iterator(cwd))
+    {
+        bool skipThisPath = false;
+
+        // if (((std::string)path.path()).find() )
+        // Loop over all ignore rules and ignore if it matches
+        for (auto &&rule : ignoreRules)
+        {
+            // Check if we ignore this path
+            if (std::regex_search(path.path().c_str(), rule))
+            {
+                skipThisPath = true;
+                break;
+            }
+        }
+
+        // Apply the ignore rules
+        if (skipThisPath) continue;
+        
+        // If we've made a change to alter the file structure, rebuild it
+        if (action(path)) goto rebuild;
+    }
+}
 
 
 /**
@@ -125,7 +182,9 @@ int main(int argc, char *argv[])
         std::regex(".git"),
         std::regex(".vscode"),
         std::regex(".gitignore"),
-        std::regex("CLI11.hpp")
+        std::regex("CLI11.hpp"),
+        std::regex("init_project.cpp"),
+        std::regex("init")
     };
 
 
@@ -147,35 +206,74 @@ int main(int argc, char *argv[])
     }
     
 
-    ///
-    // By this point we know what action to take
-    //
+    // Define the patterns we want to replace
+    std::vector<std::pair<std::regex, std::string>> replacePatterns = {
+        { std::regex("__PROJID__"), projNumStr },
+        { std::regex("<PROJ>"),     projName   },
+        { std::regex("<EXEC>"),     execName   }
+    };
     
-    
-
-    // Go through CWD and move directories or files that match pattern
-    for (auto &&path : std::filesystem::recursive_directory_iterator(cwd))
+    /**
+     * @brief A function to replace text by pattern (captures used variables by reference)
+     */
+    auto replaceText = [&](action_param_type &path)->bool
     {
-        bool skipThisPath = false;
+        return false;
+    };
+    
+    /**
+     * @brief A function to rename directories by pattern
+     */
+    auto moveDirs    = [&](action_param_type &path)->bool
+    {
+        // Check if the path is a directory, file or symlink
+        if (!(path.is_directory() || path.is_regular_file() || path.is_symlink())) return false;
 
-        // if (((std::string)path.path()).find() )
-        // Loop over all ignore rules and ignore if it matches
-        for (auto &&rule : ignoreRules)
+        // Loop over the replace rules
+        auto fname = path.path().filename();
+        for (auto &&rule : replacePatterns)
         {
-            // Check if we ignore this path
-            if (std::regex_search(path.path().c_str(), rule))
+            if (std::regex_search(fname.c_str(), rule.first))
             {
-                skipThisPath = true;
-                break;
+                // For the first match, apply and return
+                auto newFname = std::regex_replace(fname.c_str(), rule.first, rule.second);
+
+                // Apply action / don't
+                if (!dryRun)
+                {
+                    std::filesystem::rename(path.path(), path.path().parent_path() / newFname);
+
+                    // Update 
+                    return true;
+                }
+                else
+                {
+                    printf("mv %s %s\n", path.path().c_str(), (path.path().parent_path() / newFname).c_str());
+                    return false;
+                }
             }
         }
 
-        // Apply the ignore rules
-        if (skipThisPath) continue;
-        
-        printf("%s\n", path.path().c_str());
+        return false;
+    };
+
+    if (dryRun)
+    {
+        // Inform user that we're in dry-run mode
+        std::cout << "Running in dry-run mode:\n= Move operations   =\n";
     }
-    
+
+    // Move dirs
+    action_on_path(cwd, ignoreRules, moveDirs);
+
+    if (dryRun)
+        std::cout << "\n= Replace operations =\n\n";
+
+    // Replace text
+    action_on_path(cwd, ignoreRules, replaceText);
+
+    if (dryRun)
+        std::cout << '\n';
 
     // Summarise action
     printf("Initiated project with project id %s name %s and executable name %s\n", projNumStr.c_str(), projName.c_str(), execName.c_str());
