@@ -244,13 +244,13 @@ int main(int argc, char *argv[])
     auto moveDirs    = [&](action_path_type &path, action_tree_type *tree)->void
     {
         // Loop over the replace rules
-        updatePath:
-        auto oldPath      = path.path();
-        auto oldFname     = oldPath.filename();
-        auto oldFnameCstr = oldFname.c_str();
-
         for (auto &&rule : replacePatterns)
         {
+            // We could get multiple hits
+            auto oldPath            = path.path();
+            auto oldFname           = oldPath.filename();
+            const auto oldFnameCstr = oldFname.c_str();
+
             if (std::regex_search(oldFnameCstr, rule.first))
             {
                 // For the first match, apply and return
@@ -269,7 +269,6 @@ int main(int argc, char *argv[])
 
                 // Update this path in memory
                 path.assign(newPath);
-                std::cout << "  rPath " << path.path().c_str() << "\n\n";
 
                 // If the path is a directory, then we'll need to update
                 // subdirectories of that path in memory to match reality
@@ -288,18 +287,12 @@ int main(int argc, char *argv[])
                         if (tPath.generic_string().starts_with(oldPathStr))
                         {
                             // Modify the old path to be derivative of the new path
-                            printf("    oPath %s\n    nPath %s\n", tPath.c_str(), (newPath / fs::relative(tPath, oldPath)).c_str());
                             tEnt.assign(newPath / fs::relative(tPath, oldPath));
-                            printf("    rPath %s\n\n", tPath.c_str());
                         }
                     }
                 }
-                
-                goto updatePath;
             }
         }
-
-        return;
     };
 
     if (dryRun)
