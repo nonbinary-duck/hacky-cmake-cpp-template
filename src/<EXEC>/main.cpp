@@ -2,7 +2,7 @@
 
 using std::cout, std::cin, std::endl;
 
-#include "src/utils.hpp"
+#include "utils.hpp"
 
 
 /**
