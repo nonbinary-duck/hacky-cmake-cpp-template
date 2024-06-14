@@ -235,7 +235,49 @@ int main(int argc, char *argv[])
      */
     auto replaceText = [&](action_path_type &path, action_tree_type *tree)->void
     {
-        return;
+        bool hit = false;
+
+        // Reading taken from en.cppreference.com: https://en.cppreference.com/w/cpp/io/basic_istream/read
+        // Immediately seek to the end of the file so we know the size of it
+
+        // It needs to open
+        if (std::fstream fStream{path.path() , std::ios::binary | std::ios::ate})
+        {
+            auto fSize = fStream.tellg();
+            // Return to the beginning of the file
+            fStream.seekg(0);
+            std::string fBuffer(fSize, '\0');
+            // Write into our buffer
+            if (!fStream.read(&fBuffer[0], fSize))
+                std::cout << "Failed to read " << path << '\n';
+
+            // Loop over regex rules
+            for (auto &&rule : replacePatterns)
+            {
+                // Search for our rule
+                if (std::regex_search(fBuffer, rule.first))
+                {
+                    // Register the hit
+                    hit = true;
+                    // We don't take any action on dry run (and only care if one rule hits)
+                    if (dryRun) break;
+
+                    // Replace
+                    std::regex_replace(fBuffer, rule.first, rule.second);
+                }
+            }
+            
+            // Write out new (entire) file
+            if (hit)
+            {
+                fStream.write(&fBuffer[0], fSize);
+
+                std::cout << "Applied RegEx changes to " << path << '\n';
+            }
+        }
+        else
+            std::cout << "Failed to open " << path << '\n';
+        
     };
     
     /**
@@ -264,7 +306,7 @@ int main(int argc, char *argv[])
                 }
                 else
                 {
-                    printf("mv %s %s\n", oldPath.c_str(), newPath.c_str());
+                    printf("  %s ⇢ %s\n", oldPath.c_str(), newPath.c_str());
                 }
 
                 // Update this path in memory
@@ -298,7 +340,7 @@ int main(int argc, char *argv[])
     if (dryRun)
     {
         // Inform user that we're in dry-run mode
-        std::cout << "Running in dry-run mode:\n= Move operations   =\n";
+        std::cout << "Running in dry-run mode:\n= Move operations    =\n";
     }
 
     // Move dirs
