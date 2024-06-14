@@ -245,14 +245,14 @@ int main(int argc, char *argv[])
         
         // Immediately seek to the end of the file so we know the size of it
         // It needs to open
-        if (std::fstream fStream{path.path() , std::ios::binary | std::ios::ate | std::ios::in | std::ios::out})
+        if (std::fstream fIStream{path.path() , std::ios::binary | std::ios::ate | std::ios::in})
         {
-            auto fSize = fStream.tellg();
+            auto fSize = fIStream.tellg();
             // Return to the beginning of the file
-            fStream.seekg(0);
+            fIStream.seekg(0);
             std::string fBuffer(fSize, '\0');
             // Write into our buffer
-            if (!fStream.read(&fBuffer[0], fSize))
+            if (!fIStream.read(&fBuffer[0], fSize))
                 std::cout << "Failed to read " << path << '\n';
 
             // Loop over regex rules
@@ -264,26 +264,32 @@ int main(int argc, char *argv[])
                     // Register the hit
                     hit = true;
                     // We don't take any action on dry run (and only care if one rule hits)
-                    // if (dryRun) break;
+                    if (dryRun) break;
 
                     // Replace
                     fBuffer = std::regex_replace(fBuffer, rule.first, rule.second);
                 }
             }
 
-            if (hit)
-                std::cout << fBuffer << "\n\n\n";
-            
             // Write out new (entire) file
-            if (hit && dryRun)
-                std::cout << "(dry run) Applied RegEx changes to " << path << '\n';
-            else if (hit)
+            if (hit && !dryRun)
             {
-                // Seek to beginning for write
-                fStream.seekp(0);
-                // Size has now potentially changed if the replace is of different size to the rule matches
-                fStream.write(&fBuffer[0], fBuffer.size() - 1);
+                // We must close our reading stream
+                fIStream.close();
+                
+                // We need a new instance of fstream
+                if (std::fstream fOStream{path.path() , std::ios::binary | std::ios::ate | std::ios::out | std::ios::trunc})
+                {
+                    // Seek to beginning for write
+                    fOStream.seekp(0);
+                    // Size has now potentially changed if the replace is of different size to the rule matches
+                    fOStream.write(&fBuffer[0], fBuffer.size());
+                }
+                else std::cout << "Failed to open for write " << path << '\n';
             }
+            else if (hit)
+                std::cout << "(dry run) Applied RegEx changes to " << path << '\n';
+
         }
         else
             std::cout << "Failed to open " << path << '\n';
