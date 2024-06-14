@@ -235,13 +235,17 @@ int main(int argc, char *argv[])
      */
     auto replaceText = [&](action_path_type &path, action_tree_type *tree)->void
     {
+        // No action if dir
+        if (!path.is_regular_file()) return;
+        
+        // If we have at least one regex hits
         bool hit = false;
 
         // Reading taken from en.cppreference.com: https://en.cppreference.com/w/cpp/io/basic_istream/read
+        
         // Immediately seek to the end of the file so we know the size of it
-
         // It needs to open
-        if (std::fstream fStream{path.path() , std::ios::binary | std::ios::ate})
+        if (std::fstream fStream{path.path() , std::ios::binary | std::ios::ate | std::ios::in | std::ios::out})
         {
             auto fSize = fStream.tellg();
             // Return to the beginning of the file
@@ -270,9 +274,11 @@ int main(int argc, char *argv[])
             // Write out new (entire) file
             if (hit)
             {
+                // Seek to beginning for write
+                fStream.seekp(0);
                 fStream.write(&fBuffer[0], fSize);
 
-                std::cout << "Applied RegEx changes to " << path << '\n';
+                std::cout << ((dryRun)? "(dry run) " : "") << "Applied RegEx changes to " << path << '\n';
             }
         }
         else
