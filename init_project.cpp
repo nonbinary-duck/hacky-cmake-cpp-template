@@ -10,10 +10,12 @@
 
 #include "CLI11.hpp"
 
+namespace fs = std::filesystem;
+
 
 //
 // CoLiRu with:
-//     g++ init_project.cpp -Os -o init && ./init --help
+//     g++ init_project.cpp -std=c++23 -Os -o init && ./init --help
 // 
 // Then manually remove these files
 //     rm CLI11.hpp init_project.cpp init
@@ -21,11 +23,21 @@
 
 
 // The maximum number of times to attempt to rebuild a file hierarchy
-#define MAX_PATH_CHANGES 10'000ul
+#define MAX_PATH_CHANGES 5'000ul
 
 
-typedef const std::filesystem::directory_entry action_param_type;
-typedef std::function<bool(action_param_type)> action_func_type;
+/**
+ * @brief The type used to represent a single path
+ */
+typedef fs::directory_entry                                                action_path_type;
+/**
+ * @brief The type used to represent all the paths
+ */
+typedef std::vector<action_path_type>                                       action_tree_type;
+/**
+ * @brief A function to make changes to a path
+ */
+typedef std::function<void(action_path_type &path, action_tree_type *tree)> action_func_type;
 
 
 /**
@@ -68,20 +80,24 @@ const static ValidKeyValidator ValidKey;
  * @param action The action to take
  */
 inline void action_on_path(
-    const std::filesystem::path &cwd,
+    const fs::path &cwd,
     const std::vector<std::regex> &ignoreRules,
     const action_func_type &action)
 {
-    size_t rebuildCount = 0;
-    
-rebuild:
+    auto treeIter = fs::recursive_directory_iterator(cwd);
+    auto *tree = new std::vector<fs::directory_entry>();
 
-    if (rebuildCount++ > MAX_PATH_CHANGES)
+    // Iterate over the path and store what we find
+    for (auto &&path : treeIter)
     {
-        throw std::runtime_error("To many path changes, invalid replace patterns can cause recursion");
+        // Check if the path is a directory, file or symlink
+        if (!(path.is_directory() || path.is_regular_file() || path.is_symlink())) continue;
+        
+        // Make a copy of each entry
+        tree->push_back(path);
     }
     
-    for (auto &&path : std::filesystem::recursive_directory_iterator(cwd))
+    for (auto &&path : *tree)
     {
         bool skipThisPath = false;
 
@@ -100,9 +116,10 @@ rebuild:
         // Apply the ignore rules
         if (skipThisPath) continue;
         
-        // If we've made a change to alter the file structure, rebuild it
-        if (action(path)) goto rebuild;
+        action(path, tree);
     }
+    
+    delete tree;
 }
 
 
@@ -152,6 +169,8 @@ int main(int argc, char *argv[])
     // Init app
     CLI11_PARSE(app, argc, argv);
 
+    if (dryRun) selfDestruct = false;
+
     if (projNum == -1UL)
     {
         // Use a non-deterministic random value for the project ID if no ID was manually specified
@@ -168,11 +187,11 @@ int main(int argc, char *argv[])
     }
     
     // Get the current working directory
-    auto cwd = std::filesystem::current_path();
+    auto cwd = fs::current_path();
 
     // Check if there is a gitignore and .git directory (check we're in the right place)
-    if (!std::filesystem::exists(cwd / ".git") | !std::filesystem::exists(cwd / ".gitignore"))
-        throw std::runtime_error("Must be executed where CWD is a directory with git is set up and a gitignore file");
+    if (!fs::exists(cwd / ".git") | !fs::exists(cwd / ".gitignore"))
+        throw std::runtime_error("Must be executed where CWD is a directory with git is set up with a gitignore file");
 
 
     // Read entries in the gitignore and treat each line as a regex rule
@@ -180,7 +199,6 @@ int main(int argc, char *argv[])
     // Start with some additional rules
     std::vector<std::regex> ignoreRules = {
         std::regex(".git"),
-        std::regex(".vscode"),
         std::regex(".gitignore"),
         std::regex("CLI11.hpp"),
         std::regex("init_project.cpp"),
@@ -201,8 +219,7 @@ int main(int argc, char *argv[])
 
             // Add this line as a rule
             ignoreRules.push_back( std::regex(line) );
-        }
-        
+        }   
     }
     
 
@@ -216,45 +233,73 @@ int main(int argc, char *argv[])
     /**
      * @brief A function to replace text by pattern (captures used variables by reference)
      */
-    auto replaceText = [&](action_param_type &path)->bool
+    auto replaceText = [&](action_path_type &path, action_tree_type *tree)->void
     {
-        return false;
+        return;
     };
     
     /**
      * @brief A function to rename directories by pattern
      */
-    auto moveDirs    = [&](action_param_type &path)->bool
+    auto moveDirs    = [&](action_path_type &path, action_tree_type *tree)->void
     {
-        // Check if the path is a directory, file or symlink
-        if (!(path.is_directory() || path.is_regular_file() || path.is_symlink())) return false;
-
         // Loop over the replace rules
-        auto fname = path.path().filename();
+        updatePath:
+        auto oldPath      = path.path();
+        auto oldFname     = oldPath.filename();
+        auto oldFnameCstr = oldFname.c_str();
+
         for (auto &&rule : replacePatterns)
         {
-            if (std::regex_search(fname.c_str(), rule.first))
+            if (std::regex_search(oldFnameCstr, rule.first))
             {
                 // For the first match, apply and return
-                auto newFname = std::regex_replace(fname.c_str(), rule.first, rule.second);
+                auto newFname = std::regex_replace(oldFnameCstr, rule.first, rule.second);
+                auto newPath  = (oldPath.parent_path() / newFname);
 
                 // Apply action / don't
                 if (!dryRun)
                 {
-                    std::filesystem::rename(path.path(), path.path().parent_path() / newFname);
-
-                    // Update 
-                    return true;
+                    fs::rename(oldPath, newPath);
                 }
                 else
                 {
-                    printf("mv %s %s\n", path.path().c_str(), (path.path().parent_path() / newFname).c_str());
-                    return false;
+                    printf("mv %s %s\n", oldPath.c_str(), newPath.c_str());
                 }
+
+                // Update this path in memory
+                path.assign(newPath);
+                std::cout << "  rPath " << path.path().c_str() << "\n\n";
+
+                // If the path is a directory, then we'll need to update
+                // subdirectories of that path in memory to match reality
+                // In dry-run mode the is_directory() can return garbage
+                // as we're making changes only in memory and not on disk
+                if (path.is_directory() | dryRun)
+                {
+                    // A generic representation of the modified path
+                    auto oldPathStr(oldPath.generic_string());
+                    
+                    for (auto &&tEnt : *tree)
+                    {
+                        const auto &tPath = tEnt.path();
+                        
+                        // Only modify derivative paths
+                        if (tPath.generic_string().starts_with(oldPathStr))
+                        {
+                            // Modify the old path to be derivative of the new path
+                            printf("    oPath %s\n    nPath %s\n", tPath.c_str(), (newPath / fs::relative(tPath, oldPath)).c_str());
+                            tEnt.assign(newPath / fs::relative(tPath, oldPath));
+                            printf("    rPath %s\n\n", tPath.c_str());
+                        }
+                    }
+                }
+                
+                goto updatePath;
             }
         }
 
-        return false;
+        return;
     };
 
     if (dryRun)
