@@ -17,13 +17,6 @@ namespace fs = std::filesystem;
 // CoLiRu with:
 //     g++ init_project.cpp -std=c++23 -Os -o init && ./init --help
 // 
-// Then manually remove these files
-//     rm CLI11.hpp init_project.cpp init
-//
-
-
-// The maximum number of times to attempt to rebuild a file hierarchy
-#define MAX_PATH_CHANGES 5'000ul
 
 
 /**
@@ -286,7 +279,7 @@ int main(int argc, char *argv[])
                 // Seek to beginning for write
                 fStream.seekp(0);
                 // Size has now potentially changed if the replace is of different size to the rule matches
-                fStream.write(&fBuffer[0], fBuffer.size());
+                fStream.write(&fBuffer[0], fBuffer.size() - 1);
             }
         }
         else
