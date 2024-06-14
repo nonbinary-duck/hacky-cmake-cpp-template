@@ -285,7 +285,8 @@ int main(int argc, char *argv[])
             {
                 // Seek to beginning for write
                 fStream.seekp(0);
-                fStream.write(&fBuffer[0], fSize);
+                // Size has now potentially changed if the replace is of different size to the rule matches
+                fStream.write(&fBuffer[0], fBuffer.size());
             }
         }
         else
