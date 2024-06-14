@@ -5,37 +5,37 @@
             "label": "fresh-build",
             "group": "build",
             "type": "shell",
-            "command": "cd ${workspaceFolder} && make fresh-release"
+            "command": "cd ${workspaceFolder} && rm -r build; mkdir build && cd build && cmake -DCMAKE_BUILD_TYPE=Release .. && make -j40"
         },
         {
             "label": "fresh-build-debug",
             "group": "build",
             "type": "shell",
-            "command": "cd ${workspaceFolder} && make fresh-debug"
+            "command": "cd ${workspaceFolder} && rm -r build; mkdir build && cd build && cmake -DCMAKE_BUILD_TYPE=Debug .. && make -j40"
         },
         {
             "label": "fresh-build & run",
             "group": "build",
             "type": "shell",
-            "command": "cd ${workspaceFolder} && make fresh-release; cd build && ./<EXEC>"
+            "command": "cd ${workspaceFolder} && rm -r build; mkdir build && cd build && cmake -DCMAKE_BUILD_TYPE=Release .. && make -j40 && ./<EXEC>"
         },
         {
             "label": "build",
             "group": "build",
             "type": "shell",
-            "command": "cd ${workspaceFolder} && make release"
+            "command": "cd ${workspaceFolder} && mkdir build && cd build && cmake -DCMAKE_BUILD_TYPE=Release .. && make -j40"
         },
         {
             "label": "build-debug",
             "group": "build",
             "type": "shell",
-            "command": "cd ${workspaceFolder} && make debug"
+            "command": "cd ${workspaceFolder} && mkdir build && cd build && cmake -DCMAKE_BUILD_TYPE=Debug .. && make -j40"
         },
         {
             "label": "build & run",
             "group": "build",
             "type": "shell",
-            "command": "cd ${workspaceFolder} && make release; cd build && ./<EXEC>"
+            "command": "cd ${workspaceFolder} mkdir build && cd build && cmake -DCMAKE_BUILD_TYPE=Release .. && make -j40 && ./<EXEC>"
         }
     ]
 }
