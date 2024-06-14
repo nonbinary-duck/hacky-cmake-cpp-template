@@ -274,18 +274,18 @@ int main(int argc, char *argv[])
                     if (dryRun) break;
 
                     // Replace
-                    std::regex_replace(fBuffer, rule.first, rule.second);
+                    fBuffer = std::regex_replace(fBuffer, rule.first, rule.second);
                 }
             }
             
             // Write out new (entire) file
-            if (hit)
+            if (hit && dryRun)
+                std::cout << "(dry run) Applied RegEx changes to " << path << '\n';
+            else if (hit)
             {
                 // Seek to beginning for write
                 fStream.seekp(0);
                 fStream.write(&fBuffer[0], fSize);
-
-                std::cout << ((dryRun)? "(dry run) " : "") << "Applied RegEx changes to " << path << '\n';
             }
         }
         else
