@@ -189,6 +189,13 @@ int main(int argc, char *argv[])
     // Get the current working directory
     auto cwd = fs::current_path();
 
+    // Get paths related to this application
+    std::vector<std::filesystem::path> selfDestructPaths = {
+        cwd / "init",
+        cwd / "init_project.cpp",
+        cwd / "CLI11.hpp"
+    };
+
     // Check if there is a gitignore and .git directory (check we're in the right place)
     if (!fs::exists(cwd / ".git") | !fs::exists(cwd / ".gitignore"))
         throw std::runtime_error("Must be executed where CWD is a directory with git is set up with a gitignore file");
@@ -360,6 +367,15 @@ int main(int argc, char *argv[])
 
     if (dryRun)
         std::cout << '\n';
+
+    if (!dryRun && selfDestruct)
+    {
+        // Clean up after us
+        for (auto &&path : selfDestructPaths)
+        {
+            std::filesystem::remove_all(path);
+        }
+    }
 
     // Summarise action
     printf("Initiated project with project id %s name %s and executable name %s\n", projNumStr.c_str(), projName.c_str(), execName.c_str());
