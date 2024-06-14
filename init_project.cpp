@@ -264,12 +264,15 @@ int main(int argc, char *argv[])
                     // Register the hit
                     hit = true;
                     // We don't take any action on dry run (and only care if one rule hits)
-                    if (dryRun) break;
+                    // if (dryRun) break;
 
                     // Replace
                     fBuffer = std::regex_replace(fBuffer, rule.first, rule.second);
                 }
             }
+
+            if (hit)
+                std::cout << fBuffer << "\n\n\n";
             
             // Write out new (entire) file
             if (hit && dryRun)
