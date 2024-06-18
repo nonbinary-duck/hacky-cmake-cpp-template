@@ -8,7 +8,7 @@
             "name": "debug",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceRoot}/build/<EXEC>",
+            "program": "${workspaceRoot}/build/src/<EXEC>/<EXEC>",
             "cwd": "${workspaceRoot}",
             "preLaunchTask": "build-debug"
         }
