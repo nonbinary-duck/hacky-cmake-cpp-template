@@ -1,3 +1,3 @@
 # Configuration
 
-`$ node configure_project.js`
+`$ ./init --help`
